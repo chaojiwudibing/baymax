@@ -1,22 +1,24 @@
-# Baymax｜大白饮食管家 Skill
+# Baymax — Your Personal Nutrition Skill
 
-对话式私人饮食管家，支持健康饮食、减脂、增肌和身体重组。参考 [learn-by-building](https://github.com/chaojiwudibing/learn-by-building) 的简短入口、状态流程、本地记录及校验脚本结构。只做饮食规划，不制定运动计划。
+**English** | [简体中文](README.zh-CN.md)
 
-## 安装与使用
+A conversational nutrition assistant for healthy eating, fat loss, muscle gain, and body recomposition. Its concise entry point, state-based workflow, local records, and validation scripts are inspired by [learn-by-building](https://github.com/chaojiwudibing/learn-by-building). It focuses on nutrition planning and does not create exercise programs.
 
-将本仓库克隆到 Codex 的技能目录，目录名使用 `baymax`，随后输入 `$baymax`。
+## Installation and use
+
+Clone this repository into your Codex skills directory under the name `baymax`, then invoke `$baymax`.
 
 ```sh
 git clone https://github.com/chaojiwudibing/baymax.git ~/.codex/skills/baymax
 ```
 
-如果目录已存在，先检查已有内容，避免覆盖。Python 3.9 或以上即可运行核算脚本，无需第三方依赖或营养 API 订阅。
+If the directory already exists, inspect its contents first to avoid overwriting an existing installation. The calculation scripts require Python 3.9 or later, with no third-party dependencies or nutrition API subscription.
 
-初次只采集六组简短信息，之后读取本机档案继续服务。输出完整30天 Markdown、逐餐食材/每日营养/采购/分份备餐/真实记录 CSV，以及来源和审计 JSON。按真实记录在第7、14、21、30天复盘。
+The initial intake consists of six short question groups. Subsequent sessions use your local profile to continue planning. Deliverables include a complete 30-day Markdown plan; CSV files for meal ingredients, daily nutrients, shopping, meal-prep portions, and actual daily records; and JSON files for sources and calculation audits. Reviews on days 7, 14, 21, and 30 use your actual records.
 
-## 数据库与准确性
+## Database and accuracy
 
-使用本机 SQLite。支持导入 USDA 官方 SR28 原始归档与有证据的具体商品标签。数据库和私人档案不随仓库发布，使用时依据 [数据协议](references/data-contract.md) 获取和导入。
+Baymax uses a local SQLite database. It supports importing the official USDA SR28 archive and specific product labels backed by evidence. The repository does not include the database or private profiles. Follow the [data contract](references/data-contract.md) to obtain and import the data.
 
 ```sh
 python3 scripts/nutrition_db.py import-sr28 --archive /path/to/sr28asc.zip --db .baymax/data/nutrition.sqlite --accessed YYYY-MM-DD
@@ -24,20 +26,20 @@ python3 scripts/nutrition_db.py search --db .baymax/data/nutrition.sqlite --quer
 python3 scripts/calculate_plan.py --db .baymax/data/nutrition.sqlite --plan .baymax/plan-input.json --out .baymax/plans/new-version --strict
 ```
 
-访问日期填写真实获取日期。SR28 是历史美国食物成分数据，不等于中国实际商品标签或最新 FDC 数据。未接入有授权的中国食物成分表、深圳实时价格，也不承诺人体效果。
+Replace `YYYY-MM-DD` with the actual date you obtained the archive. SR28 contains historical US food composition data; it does not represent actual Chinese product labels or the latest FoodData Central data. Licensed Chinese food composition tables and live Shenzhen prices are not integrated. Physiological outcomes are not guaranteed.
 
-营养按条目和重量计算，保留来源ID、版本和文件哈希。未知营养不是0；生熟/干重口径不一致拒绝核算；ml 转克数需密度证据；购物核算包括可食率、包装进位及库存结转。
+Nutrients are calculated from source entries and ingredient weights, preserving source IDs, versions, and file hashes. Unknown nutrients are not treated as zero. Inconsistent raw, cooked, or dry weight bases are rejected. Converting milliliters to grams requires density evidence. Shopping calculations account for edible yields, whole-package rounding, and inventory carryover.
 
-`--strict`遇到未匹配食物、未知营养、未核实报价或未完成执行审核，保存草案并返回退出码1；格式错误返回2。校验通过仍是食物成分估算，不等于实验室检测、临床审核或效果保证。食物和SKU的证据仍需人工核对。
+With `--strict`, unmatched foods, unknown nutrients, unverified prices, or an incomplete execution review produce a saved draft and exit code 1. Invalid input formats produce exit code 2. Passing validation still provides a food composition estimate, not laboratory testing, clinical approval, or an outcome guarantee. Evidence for food and SKU matches still requires manual review.
 
-## 隐私与验证
+## Privacy and validation
 
-健康档案、真实记录和计划默认仅保存在用户本机 `.baymax/`，不上传、不写入公开仓库。skill不能自行感知身体变化或自动监测。
+Health profiles, actual records, and plans are stored locally in the user's `.baymax/` directory by default. They are not uploaded or included in the public repository. The skill cannot independently sense body changes or monitor you automatically.
 
 ```sh
 python3 -m unittest discover -s tests -v
 ```
 
-23项测试覆盖来源、缺失值、重量口径、日期、价格、库存、备餐一致性、严格模式和真实记录。测试使用合成数据，不包含开发者的个人健康资料。
+The 23 tests cover provenance, missing values, weight bases, dates, prices, inventory, meal-prep consistency, strict mode, and actual records. They use synthetic data and contain no personal health information from the developer.
 
-入口：[SKILL.md](SKILL.md)。保存与复盘：[本地记录](references/local-records.md)。完整交付：[计划与复盘](references/plan-and-review.md)。
+Entry point: [SKILL.md](SKILL.md). Storage and reviews: [local records](references/local-records.md). Full delivery requirements: [planning and review](references/plan-and-review.md).
