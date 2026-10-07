@@ -46,3 +46,17 @@ python3 -m unittest discover -s tests -v
 入口：[SKILL.md](SKILL.md)。保存与复盘：[本地记录](references/local-records.md)。完整交付：[计划与复盘](references/plan-and-review.md)。
 
 修订同一周期时使用 `calculate_plan.py --journal /path/to/old.xlsx` 保留用户已填的真实记录并生成新工作簿。复盘可直接运行 `review_logs.py --journal /path/to/plan.xlsx --start YYYY-MM-DD --out /path/to/new-review.json`。只有真实记录影响复盘，计划不视为已摄入。
+
+## 可选：到时投放到手机与电脑
+
+支持为微软 To Do 准备跨平台投放通道，接收端覆盖 Windows、Android 和 iPhone。同一套私有计划由云端worker按时间创建当前任务，未来任务不提前塞进清单；不依赖个人电脑持续开机。
+
+这是通用代码和部署说明，目前通过本地模拟验证，真实账号授权、云端部署与手机通知仍需验收。启用需要个人微软账号、应用注册和用户选择的云端运行环境；发送餐食详情前需授权。Excel仍为默认交付，记录不会自动回传。见[接入与验收步骤](references/reminder-delivery.md)。
+
+Windows（PowerShell）安装路径：
+
+```powershell
+git clone https://github.com/chaojiwudibing/baymax.git "$env:USERPROFILE\.codex\skills\baymax"
+```
+
+Windows电脑负责在Codex里生成/修订计划；Android或iPhone通过微软To Do接收已启用的云端投放，不需要在手机安装Codex skill。

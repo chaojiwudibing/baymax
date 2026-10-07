@@ -41,8 +41,22 @@ python3 -m pip install -r requirements.txt
 python3 -m unittest discover -s tests -v
 ```
 
-The 31 tests cover provenance, missing values, weight bases, dates, prices, inventory, meal-prep consistency, strict mode, and actual records. They use synthetic data and contain no personal health information from the developer.
+The tests cover provenance, missing values, weight bases, dates, prices, inventory, meal-prep consistency, strict mode, and actual records. They use synthetic data and contain no personal health information from the developer.
 
 Entry point: [SKILL.md](SKILL.md). Storage and reviews: [local records](references/local-records.md). Full delivery requirements: [planning and review](references/plan-and-review.md).
 
 When revising the same period, use `calculate_plan.py --journal /path/to/old.xlsx` to preserve actual records in a new workbook. Review Excel records directly with `review_logs.py --journal /path/to/plan.xlsx --start YYYY-MM-DD --out /path/to/new-review.json`. Planned intake is never treated as actual intake.
+
+## Optional: time-gated reminders across devices
+
+A Microsoft To Do delivery bridge supports Windows, Android and iPhone clients. A private cloud worker creates only tasks whose scheduled time has arrived; it does not import the entire 30-day queue or depend on a personal computer remaining awake.
+
+The code has local simulated validation, not live account, cloud or phone-notification acceptance. Enabling it requires a personal Microsoft account, application registration, a chosen cloud runtime, and explicit consent to upload task details. Excel remains the default deliverable; completion is not actual intake and notes do not automatically flow back. See the [connection and acceptance guide](references/reminder-delivery.md).
+
+Windows installation (PowerShell):
+
+```powershell
+git clone https://github.com/chaojiwudibing/baymax.git "$env:USERPROFILE\.codex\skills\baymax"
+```
+
+Generate or revise the plan in Codex on a desktop. Android and iPhone receive enabled cloud deliveries through Microsoft To Do; they do not install the Codex skill.
