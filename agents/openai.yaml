@@ -1,0 +1,4 @@
+interface:
+  display_name: "Baymax｜大白"
+  short_description: "用可追溯营养数据库制定完整三十天饮食、采购备餐计划，并按真实记录调节"
+  default_prompt: "使用 $baymax，读取我已有的信息，为我制定有数据库依据的完整30天饮食和采购备餐计划，并列出尚未核实的数据。"

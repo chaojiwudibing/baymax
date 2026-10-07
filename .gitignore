@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.baymax/
+*.sqlite
+*.sqlite3
+.DS_Store
