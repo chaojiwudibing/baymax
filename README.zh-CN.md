@@ -12,9 +12,9 @@
 git clone https://github.com/chaojiwudibing/baymax.git ~/.codex/skills/baymax
 ```
 
-如果目录已存在，先检查已有内容，避免覆盖。Python 3.9 或以上即可运行核算脚本，无需第三方依赖或营养 API 订阅。
+如果目录已存在，先检查已有内容，避免覆盖。Python 3.9 或以上即可运行；营养核算使用标准库，Excel导出使用openpyxl，无需营养API订阅。Codex桌面优先使用内置工作区依赖；其他环境用本地虚拟环境安装 `requirements.txt`。
 
-初次只采集六组简短信息，之后读取本机档案继续服务。输出完整30天 Markdown、逐餐食材/每日营养/采购/分份备餐/真实记录 CSV，以及来源和审计 JSON。按真实记录在第7、14、21、30天复盘。
+初次只采集六组简短信息，之后读取本机档案继续服务。最终输出一个中文Excel工作簿：每日菜单、食材克数、营养、采购、备餐、替换、真实记录与复盘安排全部分表整理。首页有使用指引，中文列名注明单位，冻结表头、筛选、自动换行；每日记录浅蓝格可填写。JSON/CSV/Markdown只作本机核算底稿。按真实记录在第7、14、21、30天复盘。
 
 ## 数据库与准确性
 
@@ -37,9 +37,12 @@ python3 scripts/calculate_plan.py --db .baymax/data/nutrition.sqlite --plan .bay
 健康档案、真实记录和计划默认仅保存在用户本机 `.baymax/`，不上传、不写入公开仓库。skill不能自行感知身体变化或自动监测。
 
 ```sh
+python3 -m pip install -r requirements.txt
 python3 -m unittest discover -s tests -v
 ```
 
-23项测试覆盖来源、缺失值、重量口径、日期、价格、库存、备餐一致性、严格模式和真实记录。测试使用合成数据，不包含开发者的个人健康资料。
+31项测试覆盖来源、缺失值、重量口径、日期、价格、库存、备餐一致性、严格模式和真实记录。测试使用合成数据，不包含开发者的个人健康资料。
 
 入口：[SKILL.md](SKILL.md)。保存与复盘：[本地记录](references/local-records.md)。完整交付：[计划与复盘](references/plan-and-review.md)。
+
+修订同一周期时使用 `calculate_plan.py --journal /path/to/old.xlsx` 保留用户已填的真实记录并生成新工作簿。复盘可直接运行 `review_logs.py --journal /path/to/plan.xlsx --start YYYY-MM-DD --out /path/to/new-review.json`。只有真实记录影响复盘，计划不视为已摄入。

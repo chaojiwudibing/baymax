@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Read actual journal CSV, report observed windows without invented values."""
+"""Read actual Excel/CSV records, report observed windows without invented values."""
 import argparse
 import csv
 import json
@@ -9,8 +9,12 @@ from nutrition_db import positive
 
 def review(path, start):
     start = date.fromisoformat(start)
-    with Path(path).open(encoding='utf-8-sig', newline='') as f:
-        rows = list(csv.DictReader(f))
+    if Path(path).suffix.lower() == '.xlsx':
+        from export_excel import read_records
+        rows = read_records(path)
+    else:
+        with Path(path).open(encoding='utf-8-sig', newline='') as f:
+            rows = list(csv.DictReader(f))
     seen, weights, complete = set(), {}, []
     for r in rows:
         d = date.fromisoformat(r['date'])

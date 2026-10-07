@@ -184,11 +184,21 @@ def calculate(plan, db):
                 raise ValueError('meal refers to missing preparation batch')
     costs = [r['cost'] for r in shopping] + [b.get('delivery_cost') for b in plan['shopping']]
     total = round(sum(costs), 2) if all(c is not None for c in costs) else None
+    substitutions = plan.get('substitutions', [])
+    for option in substitutions:
+        for kind in ('original', 'replacement'):
+            if not option.get(kind):
+                raise ValueError('substitution needs original and replacement ingredients')
+            for item in option[kind]:
+                if item['food'] not in registry:
+                    raise ValueError('substitution food must have a source entry')
+                positive(item['grams'], 'substitution grams')
     return dict(schema_version=1, status='数据协议通过' if not gaps else '草案：数据缺口未解决',
                 disclaimer='核算结果是食物成分估算；不保证人体效果，不代表临床或食品安全审核。',
                 gaps=sorted(gaps), sources=registry, days=days, shopping=shopping,
                 estimated_purchase_total=total, line_rows=line_rows, operational_plan=plan['shopping'],
-                profile=plan.get('profile'), target=plan.get('target'), assumptions=plan.get('assumptions', []), batch_rows=batch_rows)
+                profile=plan.get('profile'), target=plan.get('target'), assumptions=plan.get('assumptions', []), batch_rows=batch_rows,
+                substitutions=substitutions)
 
 
 def write_csv(path, rows, fields):
@@ -202,7 +212,11 @@ def write_csv(path, rows, fields):
             writer.writerow({k: safe(v) for k, v in r.items()})
 
 
-def deliver(result, out):
+def deliver(result, out, journal=None):
+    try:
+        from export_excel import export_workbook
+    except ImportError as exc:
+        raise ValueError('Excel export requires openpyxl; use the bundled runtime or install requirements.txt in a local virtual environment') from exc
     out = Path(out)
     if out.exists() and any(out.iterdir()):
         raise ValueError('output directory must be new or empty; preserve earlier plans and logs')
@@ -247,6 +261,7 @@ def deliver(result, out):
     md += ['\n## 记录与长期调整', '每天填写真实每日记录.csv，留空表示未记录。Day 7/14/21复盘执行及感受，至少两周趋势后讨论小幅热量调整。Day 30依据真实记录制定未来8–12周计划；未提供记录不编造结果。',
            '\n## 来源', *['- '+alias+'：'+e['food']['description']+'；'+json.dumps(e['food']['source'], ensure_ascii=False) for alias,e in result['sources'].items()]]
     (out/'30天饮食计划.md').write_text('\n'.join(md)+'\n', encoding='utf-8')
+    export_workbook(result, out/'Baymax-30天饮食计划.xlsx', journal)
 
 
 def main():
@@ -254,12 +269,13 @@ def main():
     for k in ('db','plan','out'):
         p.add_argument('--'+k, required=True)
     p.add_argument('--strict', action='store_true')
+    p.add_argument('--journal', help='Preserve actual records from an existing Excel workbook or CSV')
     args = p.parse_args()
     try:
         plan = json.loads(Path(args.plan).read_text(encoding='utf-8'))
         result = calculate(plan, args.db)
-        deliver(result, args.out)
-        print(json.dumps({'status':result['status'],'gaps':len(result['gaps']),'output':str(Path(args.out).resolve())},ensure_ascii=False))
+        deliver(result, args.out, args.journal)
+        print(json.dumps({'status':result['status'],'gaps':len(result['gaps']),'excel':str((Path(args.out)/'Baymax-30天饮食计划.xlsx').resolve())},ensure_ascii=False))
         return 1 if args.strict and result['gaps'] else 0
     except (ValueError, KeyError, TypeError, sqlite3.Error) as e:
         print('Validation failed: '+str(e))

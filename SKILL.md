@@ -19,18 +19,20 @@ description: 制定有数据库来源、可核算的完整30天健康饮食、�
 
 ## 数据和工具
 
-本 skill 包含 Python 标准库工具，无需订阅或 API key：
+营养数据库和核算使用 Python 标准库；Excel 导出使用 openpyxl，无需营养 API 订阅或 key。优先使用 Codex 提供的工作区 Python 依赖环境；其他环境先在本地虚拟环境安装 `requirements.txt`，不能缺依赖就改交付格式。
 
 - `scripts/nutrition_db.py import-sr28 --archive <官方SR28压缩包> --db <本地SQLite> --accessed <真实访问日期>`：导入真实 USDA 历史数据、原始文件哈希和条目ID。
 - `scripts/nutrition_db.py search --db <数据库> --query <英文关键词>`：查条目，关键词命中不等于匹配确认。
 - `scripts/nutrition_db.py import-labels --db <数据库> --file <标签JSON>`：导入有证据的具体商品标签；标签没有的营养素留空。
-- `scripts/calculate_plan.py --db <数据库> --plan <计划JSON> --out <新的输出目录>`：计算逐餐/每日营养、包装进位和库存结转，输出 Markdown、CSV、来源与审计JSON。
+- `scripts/calculate_plan.py --db <数据库> --plan <计划JSON> --out <新的输出目录>`：计算逐餐/每日营养、包装进位和库存结转，默认输出 `Baymax-30天饮食计划.xlsx`；JSON/CSV/Markdown仅作为本机核算底稿。修订时用 `--journal <已有Excel或CSV>`保留用户记录，禁止覆盖原工作簿。
 - 加 `--strict` 时，任何未匹配食物、缺失核心营养、未核实采购价格或未确认损耗/换算均拒绝“核实通过”（退出码1），仍保存草案及缺口。退出码0也只表示数据协议通过，不表示人体结果保证或临床审核。
+- `scripts/export_excel.py --audit <核算与来源.json> --out <新工作簿.xlsx> [--journal <已有记录Excel或CSV>]`：将已核算的旧计划转为中文Excel；营养不重新手填。
+- `scripts/review_logs.py --journal <工作簿.xlsx> --start <起始日期> --out <新的复盘.json>`：直接从Excel的“每日记录”读取真实记录复盘。
 - `python3 -m unittest discover -s <skill目录>/tests`：运行回归验证。
 
 数据库与用户档案放在用户本机工作目录 `.baymax/`；不放进可分发 skill 包。首次没有数据库时从官方来源获取并导入；网络不通就明确说明缺失，不伪造数据库或以模型记忆填数字。支持授权的其他数据源，但转换前核查许可证和字段口径，保存来源证据。食品数据库不提供深圳实时商品价格。
 
-输出默认是完整 Markdown＋逐餐/每日/采购/记录 CSV＋来源与核算 JSON。用户明确需要时再做 XLSX/PDF，实际生成后提供链接。**不创建网站、HTML界面或手机版。** 超长计划保存在文件，聊天给摘要。不得用7天样例、周模板或“以此类推”代替30天。
+**最终默认只向用户交付一个真正的Excel `.xlsx` 工作簿。** 首页“开始使用”简明指路：每天看菜单、采购看清单、周末照备餐步骤操作、浅蓝格填真实记录。所有列名、单位和价格状态用中文；冻结表头、筛选、换行、合理列宽，营养/来源等详细字段折叠或置后。30天菜单、具体食材克数、营养、采购、分装、替换、真实记录和阶段复盘保留完整；不让用户自己拼多个Markdown、CSV或JSON。聊天只给Excel链接、两三句使用方法和必要的数据缺口。底稿在本机留作核算，只有用户明确需要才提供其他格式。**不创建网站、HTML界面或手机版。** 不得用7天样例、周模板或“以此类推”代替30天。
 
 ## 准确性的边界
 

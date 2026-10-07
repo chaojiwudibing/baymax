@@ -12,9 +12,9 @@ Clone this repository into your Codex skills directory under the name `baymax`, 
 git clone https://github.com/chaojiwudibing/baymax.git ~/.codex/skills/baymax
 ```
 
-If the directory already exists, inspect its contents first to avoid overwriting an existing installation. The calculation scripts require Python 3.9 or later, with no third-party dependencies or nutrition API subscription.
+If the directory already exists, inspect its contents first to avoid overwriting an existing installation. Python 3.9 or later is required. Nutrition calculations use the standard library; Excel export uses openpyxl. No nutrition API subscription is required. Prefer the bundled workspace runtime in Codex desktop; otherwise install `requirements.txt` in a local virtual environment.
 
-The initial intake consists of six short question groups. Subsequent sessions use your local profile to continue planning. Deliverables include a complete 30-day Markdown plan; CSV files for meal ingredients, daily nutrients, shopping, meal-prep portions, and actual daily records; and JSON files for sources and calculation audits. Reviews on days 7, 14, 21, and 30 use your actual records.
+The initial intake consists of six short question groups. Subsequent sessions use your local profile to continue planning. The final deliverable is one readable Excel workbook covering all 30 days: menus, ingredient weights, nutrients, shopping, meal prep, substitutions, actual daily records, and review dates. Chinese headers include units; sheets have filters, frozen headers, wrapped text, and an introduction. Light blue cells are for actual records. JSON, CSV, and Markdown remain local calculation records. Reviews on days 7, 14, 21, and 30 use your actual records.
 
 ## Database and accuracy
 
@@ -37,9 +37,12 @@ With `--strict`, unmatched foods, unknown nutrients, unverified prices, or an in
 Health profiles, actual records, and plans are stored locally in the user's `.baymax/` directory by default. They are not uploaded or included in the public repository. The skill cannot independently sense body changes or monitor you automatically.
 
 ```sh
+python3 -m pip install -r requirements.txt
 python3 -m unittest discover -s tests -v
 ```
 
-The 23 tests cover provenance, missing values, weight bases, dates, prices, inventory, meal-prep consistency, strict mode, and actual records. They use synthetic data and contain no personal health information from the developer.
+The 31 tests cover provenance, missing values, weight bases, dates, prices, inventory, meal-prep consistency, strict mode, and actual records. They use synthetic data and contain no personal health information from the developer.
 
 Entry point: [SKILL.md](SKILL.md). Storage and reviews: [local records](references/local-records.md). Full delivery requirements: [planning and review](references/plan-and-review.md).
+
+When revising the same period, use `calculate_plan.py --journal /path/to/old.xlsx` to preserve actual records in a new workbook. Review Excel records directly with `review_logs.py --journal /path/to/plan.xlsx --start YYYY-MM-DD --out /path/to/new-review.json`. Planned intake is never treated as actual intake.
