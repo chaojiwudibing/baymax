@@ -8,3 +8,13 @@ tokens*.json
 reminders*.json
 *.xlsx
 *.csv
+
+.venv/
+.env
+.env.*
+*.ics
+*.lock
+community/qa/
+community/data/*.sqlite3*
+caldav*.json
+*sync-state*.json

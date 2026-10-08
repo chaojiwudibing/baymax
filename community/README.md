@@ -1,0 +1,9 @@
+# Baymax 健康生活社区
+
+这是统一健康生活 skill 的本地界面，不再是独立于饮食计划的目录网站。
+
+运行 `python community/server.py`，打开 http://127.0.0.1:8848/ 。首页计划库支持步骤选择、时间/星期/提前提醒；“我的30天”支持全周期日程、实际记录、修订、饮食核算文件合并和ICS导出。“手机日历”按设备解释已有日历的接入路径。原有工具目录、博主导读、专题与本地讨论保留。
+
+完整说明见 [项目README](../README.zh-CN.md)、[来源整理](../references/community-planning.md)、[日历接入](../references/calendar-sync.md)。连接经授权的CalDAV后，保存有效修订自动排队同步；没连接时不会假报提醒已启用。
+
+默认私人数据存于`data/community.sqlite3`，不随Git发布。正式记录建议用`--database /PRIVATE/.baymax/community.sqlite3`。会话cookie区分本地所有权，清理cookie会失去原会话入口，应备份数据库与导出的记录。仅监听127.0.0.1，不能当公网多用户服务部署。快照来源仍有明确未审核项，详见主README。

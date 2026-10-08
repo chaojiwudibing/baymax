@@ -1,62 +1,62 @@
-# Baymax — Your Personal Nutrition Skill
+# Baymax — Community to a 30-Day Healthy Life Plan
 
 **English** | [简体中文](README.zh-CN.md)
 
-A conversational nutrition assistant for healthy eating, fat loss, muscle gain, and body recomposition. Its concise entry point, state-based workflow, local records, and validation scripts are inspired by [learn-by-building](https://github.com/chaojiwudibing/learn-by-building). It focuses on nutrition planning and does not create exercise programs.
+One Codex skill combines the health resource community, source-attributed plan modules, auditable nutrition planning, personal records, and phone calendar delivery. Choose entire modules or individual actions, adjust days and times, generate all 30 days, revise without losing actual records, and connect your existing calendar. No Microsoft or Google account is mandatory.
 
-## Installation and use
-
-Clone this repository into your Codex skills directory under the name `baymax`, then invoke `$baymax`.
+## Install
 
 ```sh
 git clone https://github.com/chaojiwudibing/baymax.git ~/.codex/skills/baymax
+cd ~/.codex/skills/baymax
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python community/server.py
 ```
 
-If the directory already exists, inspect its contents first to avoid overwriting an existing installation. Python 3.9 or later is required. Nutrition calculations use the standard library; Excel export uses openpyxl. No nutrition API subscription is required. Prefer the bundled workspace runtime in Codex desktop; otherwise install `requirements.txt` in a local virtual environment.
+On Windows use PowerShell, `$env:USERPROFILE\.codex\skills\baymax`, `py -m venv .venv`, and `.venv\Scripts\python`. Inspect existing installations first. Python 3.10+ is required; openpyxl provides Excel output and tzdata supplies IANA timezone data where needed.
 
-The initial intake consists of six short question groups. Subsequent sessions use your local profile to continue planning. The final deliverable is one readable Excel workbook covering all 30 days: menus, ingredient weights, nutrients, shopping, meal prep, substitutions, actual daily records, and review dates. Chinese headers include units; sheets have filters, frozen headers, wrapped text, and an introduction. Light blue cells are for actual records. JSON, CSV, and Markdown remain local calculation records. Reviews on days 7, 14, 21, and 30 use your actual records.
+Invoke `$baymax` in Codex and open [the local community](http://127.0.0.1:8848/). Use a private database path with `--database /PRIVATE/.baymax/community.sqlite3` for personal records. The browser cookie identifies a local session, not a hosted account; back up the SQLite file and exported plans/records before clearing browser data.
 
-## Database and accuracy
+## A shared planning workflow
 
-Baymax uses a local SQLite database. It supports importing the official USDA SR28 archive and specific product labels backed by evidence. The repository does not include the database or private profiles. Follow the [data contract](references/data-contract.md) to obtain and import the data.
+**Original source → attributed actions → personal selection → 30-day plan → calendar → actual records and revisions.**
+
+The included community retains the resource directory, creator guides, discussions and topic paths, and adds a plan library and personal planner. The browser and CLI use the same Python composition engine. It rejects draft creator prescriptions, invalid schedules and unsupported timezones; duplicate goals and overlapping times remain visible as conflicts and cannot be exported to a calendar. Medical suitability and cumulative training load still require source and individual review.
+
+The existing nutrition pipeline remains intact: evidence-backed food data → SQLite → ingredient calculations → readable 30-day Excel workbook. It preserves food provenance, unknown nutrients, weight bases, purchasing, storage, substitutions and actual records. Import a matching, fully checked nutrition audit into the life planner to add meal, shopping, preparation and review events. A habit template is not a complete meal plan. See [nutrition data](references/data-contract.md) and [source-to-plan rules](references/community-planning.md).
+
+## Existing calendars, not a mandatory provider
+
+- **CalDAV:** connect an existing compatible service or authorized self-hosted calendar. Once configured, saving a valid revision queues an automatic update. Stable UIDs and conditional writes prevent duplicates and protect remote manual edits; only tracked future events are removed.
+- **ICS:** export all events with alarms for compatible calendar import. No account is needed for file generation. Import is a snapshot, not automatic synchronization; duplicate import behavior varies by client.
+- **Subscription:** requires separately authorized HTTPS hosting and receiver support; refresh and notification behavior varies. This repository does not provision a subscription host.
+
+[Device combinations and calendar setup](references/calendar-sync.md) cover all 15 nonempty combinations of Mac, Windows, iPhone and Android. Some Android devices need DAVx⁵ or a compatible calendar/import application. Phone-only users need an authorized external skill runtime to generate or revise plans; they can receive calendar files without running Codex locally. OAuth-only providers are not automatically supported by the included Basic/app-password CalDAV adapter. Microsoft To Do remains optional legacy functionality.
 
 ```sh
-python3 scripts/nutrition_db.py import-sr28 --archive /path/to/sr28asc.zip --db .baymax/data/nutrition.sqlite --accessed YYYY-MM-DD
-python3 scripts/nutrition_db.py search --db .baymax/data/nutrition.sqlite --query "Chicken, broilers"
-python3 scripts/calculate_plan.py --db .baymax/data/nutrition.sqlite --plan .baymax/plan-input.json --out .baymax/plans/new-version --strict
+python scripts/life_plan.py --request /PRIVATE/request.json --out /PRIVATE/life-v1.json
+python scripts/calendar_sync.py export --plan /PRIVATE/life-v1.json --out /PRIVATE/life-v1.ics
+# After account setup and permission to upload selected event details:
+python community/server.py --database /PRIVATE/community.sqlite3 --calendar-config /PRIVATE/caldav.json --calendar-state-dir /PRIVATE/calendar-state --allow-calendar-upload
 ```
 
-Replace `YYYY-MM-DD` with the actual date you obtained the archive. SR28 contains historical US food composition data; it does not represent actual Chinese product labels or the latest FoodData Central data. Licensed Chinese food composition tables and live Shenzhen prices are not integrated. Physiological outcomes are not guaranteed.
+## Content and acceptance status
 
-Nutrients are calculated from source entries and ingredient weights, preserving source IDs, versions, and file hashes. Unknown nutrients are not treated as zero. Inconsistent raw, cooked, or dry weight bases are rejected. Converting milliliters to grams requires density evidence. Shopping calculations account for edible yields, whole-package rounding, and inventory carryover.
+The 2026-10-08 inventory tracks 1,359 repository sources and 10 creator videos. It includes 81 editorial tool-use workflows, 10 clearly labeled creator learning schedules, and 4 editorial life-organization templates. **1,278 repository candidates remain unreviewed; none of the 10 creator execution plans has a fully verified transcript.** Missing doses, repetitions and conditions are not invented. Reviewed content can be added with `scripts/import_plan_module.py`; source review is not clinical certification.
 
-With `--strict`, unmatched foods, unknown nutrients, unverified prices, or an incomplete execution review produce a saved draft and exit code 1. Invalid input formats produce exit code 2. Passing validation still provides a food composition estimate, not laboratory testing, clinical approval, or an outcome guarantee. Evidence for food and SKU matches still requires manual review.
+Composition, nutrition integration, local API isolation, calendar serialization, conditional CalDAV logic, revision/record preservation, and desktop/mobile-sized browser flows have automated checks. Actual cloud accounts, Windows execution and iOS/Android lock-screen notifications have not been accepted on real devices. This is a local community and installable skill, not a deployed multi-user service or native mobile app. See [verification](references/verification.md).
 
-## Privacy and validation
+## Privacy and tests
 
-Health profiles, actual records, and plans are stored locally in the user's `.baymax/` directory by default. They are not uploaded or included in the public repository. The skill cannot independently sense body changes or monitor you automatically.
+Private health profiles, databases, workbooks, plans, credentials and sync state are excluded from the distribution. The server binds only to 127.0.0.1. Calendar uploads require the user's selected destination and authorization. Completion marks do not imply actual nutrient intake.
 
 ```sh
-python3 -m pip install -r requirements.txt
-python3 -m unittest discover -s tests -v
+python -m unittest discover -s tests -v
+python -m unittest discover -s community/tests -v
+node community/tests/check_frontend.cjs
+node community/tests/check_planner.cjs
+node community/tests/check_browser.cjs
 ```
 
-The tests cover provenance, missing values, weight bases, dates, prices, inventory, meal-prep consistency, strict mode, and actual records. They use synthetic data and contain no personal health information from the developer.
-
-Entry point: [SKILL.md](SKILL.md). Storage and reviews: [local records](references/local-records.md). Full delivery requirements: [planning and review](references/plan-and-review.md).
-
-When revising the same period, use `calculate_plan.py --journal /path/to/old.xlsx` to preserve actual records in a new workbook. Review Excel records directly with `review_logs.py --journal /path/to/plan.xlsx --start YYYY-MM-DD --out /path/to/new-review.json`. Planned intake is never treated as actual intake.
-
-## Optional: time-gated reminders across devices
-
-A Microsoft To Do delivery bridge supports Windows, Android and iPhone clients. A private cloud worker creates only tasks whose scheduled time has arrived; it does not import the entire 30-day queue or depend on a personal computer remaining awake.
-
-The code has local simulated validation, not live account, cloud or phone-notification acceptance. Enabling it requires a personal Microsoft account, application registration, a chosen cloud runtime, and explicit consent to upload task details. Excel remains the default deliverable; completion is not actual intake and notes do not automatically flow back. See the [connection and acceptance guide](references/reminder-delivery.md).
-
-Windows installation (PowerShell):
-
-```powershell
-git clone https://github.com/chaojiwudibing/baymax.git "$env:USERPROFILE\.codex\skills\baymax"
-```
-
-Generate or revise the plan in Codex on a desktop. Android and iPhone receive enabled cloud deliveries through Microsoft To Do; they do not install the Codex skill.
+Browser tests require Playwright and Chrome (`PLAYWRIGHT_PATH`, `CHROME_PATH` overrides), use isolated data and generate ignored screenshots. Entry point: [SKILL.md](SKILL.md). The original concise skill/local-record workflow was inspired by [learn-by-building](https://github.com/chaojiwudibing/learn-by-building).

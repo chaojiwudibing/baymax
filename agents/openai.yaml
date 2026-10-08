@@ -1,4 +1,4 @@
 interface:
-  display_name: "Baymax｜大白"
-  short_description: "用可追溯数据库生成易读的三十天饮食、采购备餐Excel，并按真实记录调节"
-  default_prompt: "使用 $baymax，读取我已有的信息，为我生成有数据库依据、中文易读的完整30天饮食与采购备餐Excel，标明未核实数据。"
+  display_name: "Baymax｜大白健康生活"
+  short_description: "从社区选择有来源的计划步骤，组合完整30天健康生活、饮食与跨设备日历提醒"
+  default_prompt: "使用 $baymax，理解我的生活目标，从社区选择适合的计划步骤，组合完整30天方案，并按我已有的电脑、手机和日历接入提醒。"

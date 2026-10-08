@@ -1,62 +1,81 @@
-# Baymax｜大白饮食管家 Skill
+# Baymax｜大白健康生活 Skill
 
 [English](README.md) | **简体中文**
 
-对话式私人饮食管家，支持健康饮食、减脂、增肌和身体重组。参考 [learn-by-building](https://github.com/chaojiwudibing/learn-by-building) 的简短入口、状态流程、本地记录及校验脚本结构。只做饮食规划，不制定运动计划。
+把健康社区与30天饮食管家合并为一个 skill：**来源整理 → 选择步骤 → 自由组合 → 完整30天 → 手机日历 → 真实记录与修订**。不绑定微软、Google或其他指定账号。
 
-## 安装与使用
+## 开始使用
 
-将本仓库克隆到 Codex 的技能目录，目录名使用 `baymax`，随后输入 `$baymax`。
+将仓库安装为`baymax` skill，然后在Codex中说：
+
+> 使用 $baymax，按我的目标，从社区选计划步骤，组合30天健康生活，接入我现有的手机日历。
 
 ```sh
 git clone https://github.com/chaojiwudibing/baymax.git ~/.codex/skills/baymax
+cd ~/.codex/skills/baymax
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python community/server.py
 ```
 
-如果目录已存在，先检查已有内容，避免覆盖。Python 3.9 或以上即可运行；营养核算使用标准库，Excel导出使用openpyxl，无需营养API订阅。Codex桌面优先使用内置工作区依赖；其他环境用本地虚拟环境安装 `requirements.txt`。
-
-初次只采集六组简短信息，之后读取本机档案继续服务。最终输出一个中文Excel工作簿：每日菜单、食材克数、营养、采购、备餐、替换、真实记录与复盘安排全部分表整理。首页有使用指引，中文列名注明单位，冻结表头、筛选、自动换行；每日记录浅蓝格可填写。JSON/CSV/Markdown只作本机核算底稿。按真实记录在第7、14、21、30天复盘。
-
-## 数据库与准确性
-
-使用本机 SQLite。支持导入 USDA 官方 SR28 原始归档与有证据的具体商品标签。数据库和私人档案不随仓库发布，使用时依据 [数据协议](references/data-contract.md) 获取和导入。
-
-```sh
-python3 scripts/nutrition_db.py import-sr28 --archive /path/to/sr28asc.zip --db .baymax/data/nutrition.sqlite --accessed YYYY-MM-DD
-python3 scripts/nutrition_db.py search --db .baymax/data/nutrition.sqlite --query "Chicken, broilers"
-python3 scripts/calculate_plan.py --db .baymax/data/nutrition.sqlite --plan .baymax/plan-input.json --out .baymax/plans/new-version --strict
-```
-
-访问日期填写真实获取日期。SR28 是历史美国食物成分数据，不等于中国实际商品标签或最新 FDC 数据。未接入有授权的中国食物成分表、深圳实时价格，也不承诺人体效果。
-
-营养按条目和重量计算，保留来源ID、版本和文件哈希。未知营养不是0；生熟/干重口径不一致拒绝核算；ml 转克数需密度证据；购物核算包括可食率、包装进位及库存结转。
-
-`--strict`遇到未匹配食物、未知营养、未核实报价或未完成执行审核，保存草案并返回退出码1；格式错误返回2。校验通过仍是食物成分估算，不等于实验室检测、临床审核或效果保证。食物和SKU的证据仍需人工核对。
-
-## 隐私与验证
-
-健康档案、真实记录和计划默认仅保存在用户本机 `.baymax/`，不上传、不写入公开仓库。skill不能自行感知身体变化或自动监测。
-
-```sh
-python3 -m pip install -r requirements.txt
-python3 -m unittest discover -s tests -v
-```
-
-31项测试覆盖来源、缺失值、重量口径、日期、价格、库存、备餐一致性、严格模式和真实记录。测试使用合成数据，不包含开发者的个人健康资料。
-
-入口：[SKILL.md](SKILL.md)。保存与复盘：[本地记录](references/local-records.md)。完整交付：[计划与复盘](references/plan-and-review.md)。
-
-修订同一周期时使用 `calculate_plan.py --journal /path/to/old.xlsx` 保留用户已填的真实记录并生成新工作簿。复盘可直接运行 `review_logs.py --journal /path/to/plan.xlsx --start YYYY-MM-DD --out /path/to/new-review.json`。只有真实记录影响复盘，计划不视为已摄入。
-
-## 可选：到时投放到手机与电脑
-
-支持为微软 To Do 准备跨平台投放通道，接收端覆盖 Windows、Android 和 iPhone。同一套私有计划由云端worker按时间创建当前任务，未来任务不提前塞进清单；不依赖个人电脑持续开机。
-
-这是通用代码和部署说明，目前通过本地模拟验证，真实账号授权、云端部署与手机通知仍需验收。启用需要个人微软账号、应用注册和用户选择的云端运行环境；发送餐食详情前需授权。Excel仍为默认交付，记录不会自动回传。见[接入与验收步骤](references/reminder-delivery.md)。
-
-Windows（PowerShell）安装路径：
+Windows PowerShell：
 
 ```powershell
 git clone https://github.com/chaojiwudibing/baymax.git "$env:USERPROFILE\.codex\skills\baymax"
+Set-Location "$env:USERPROFILE\.codex\skills\baymax"
+py -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python community/server.py
 ```
 
-Windows电脑负责在Codex里生成/修订计划；Android或iPhone通过微软To Do接收已启用的云端投放，不需要在手机安装Codex skill。
+已有目录先检查，不覆盖已有安装或私人数据。Python 3.10+；Excel使用openpyxl，Windows时区使用tzdata。Codex桌面可复用现有依赖环境。
+
+打开 [本地社区](http://127.0.0.1:8848/)：在计划库选择整份模块或部分步骤，调整时间、星期、提醒，生成30天个人日程。可查看每一天、保存实际记录、修订并下载计划。浏览器会话隔离数据，但不是公开网站的账号系统。正式使用可用`--database /PRIVATE/.baymax/community.sqlite3`指定私有存储，备份数据库和导出的计划记录。
+
+## 保留的饮食能力
+
+USDA或有证据的商品标签 → SQLite → 逐餐核算 → 完整30天Excel。包含食材克数、生熟口径、营养、包装采购、备餐保存、替换、真实记录与Day 7/14/21/30复盘。未知营养不填0，不用计划值补实际摄入，修订通过`--journal`保留用户记录。
+
+```sh
+python scripts/calculate_plan.py --db /PRIVATE/nutrition.sqlite --plan /PRIVATE/meal-input.json --out /PRIVATE/new-version --strict
+```
+
+在“我的30天”选择核算结果`核算与来源.json`，日期与状态通过后合并餐食/采购/备餐/复盘提醒。日程模板不等于完整逐餐菜单。来源或执行审核有缺口时仍为草案。参阅 [数据协议](references/data-contract.md) 与 [饮食交付](references/plan-and-review.md)。生理结果不保证，核算通过不表示临床认证。
+
+## 手机日历不绑账号
+
+- **持续更新**：连接用户已有的CalDAV日历，如iCloud或用户已有/自托管的服务。连接后每次保存有效修订会自动更新未来事件，保留稳定UID，冲突时不覆盖手工备注。
+- **免账号兜底**：ICS包含全部日程和提醒，可导入兼容手机日历。**文件导入不会自动同步后续修改**，重复导入可能重复。
+- **订阅**：需另行授权HTTPS托管和接收端支持；刷新/通知因客户端而异。本版没有替用户部署订阅服务。
+
+[15种设备组合与接入方法](references/calendar-sync.md) 覆盖Mac、Windows、iPhone、安卓及混合设备。安卓部分系统需要DAVx⁵等同步器或兼容ICS导入工具。仅有手机的用户可接收日历，生成/修改skill计划仍需有授权的运行环境。没有“所有品牌零安装零账号自动同步”的不实承诺。
+
+```sh
+python scripts/calendar_sync.py export --plan /PRIVATE/life-v1.json --out /PRIVATE/life-v1.ics
+# 完成用户自己的账号连接和上传授权后：
+python community/server.py --database /PRIVATE/community.sqlite3 --calendar-config /PRIVATE/caldav.json --calendar-state-dir /PRIVATE/calendar-state --allow-calendar-upload
+```
+
+私有配置与安全凭据设置见日历文档。旧Microsoft To Do投放桥保留为用户主动选择的可选通道，不是默认要求。
+
+## 内容进度与当前边界
+
+快照：2026-10-08。社区包含1,359个仓库来源，81份已读项目的工具使用流程，10份博主学习安排和4份编辑原创生活组织模板。
+
+**仍有1,278个候选未完成来源审核，10个博主执行模块缺完整口述核对，不能声称所有内容都已变成专业健康处方。** 台账保留每个来源与缺口，未审核模块不能进入健康执行日程。已有[内容审核与导入流程](references/community-planning.md)，可把核实后的作者建议逐步补成独立步骤。第三方观点、编辑安排与额外证据分开，保留来源和许可。
+
+网页、组合引擎、饮食合并、日历导出与CalDAV同步已实现并本地测试；真实云日历认证、Windows运行、iPhone/安卓锁屏通知和所有品牌组合仍需用户环境验收。该仓库不是已经公开部署的多人社区或手机App，不提供手机端后台监控。
+
+## 隐私与验证
+
+只监听127.0.0.1，个人资料、SQLite、计划、Excel、凭据和同步状态不发布到GitHub。日历首次上传需用户授权；不默认发送健康档案。来源库保留作者链接，软件许可不自动覆盖第三方素材。
+
+```sh
+python -m unittest discover -s tests -v
+python -m unittest discover -s community/tests -v
+node community/tests/check_frontend.cjs
+node community/tests/check_planner.cjs
+node community/tests/check_browser.cjs
+```
+
+浏览器检查需要Playwright和Chrome，可设置`PLAYWRIGHT_PATH`和`CHROME_PATH`；脚本用隔离数据库，不改私人数据。测试证明的范围见[验收记录](references/verification.md)。入口是 [SKILL.md](SKILL.md)。最初的短入口和本地记录结构受 [learn-by-building](https://github.com/chaojiwudibing/learn-by-building) 启发。
