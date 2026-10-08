@@ -55,6 +55,7 @@ Private health profiles, databases, workbooks, plans, credentials and sync state
 python -m unittest discover -s tests -v
 python -m unittest discover -s community/tests -v
 node community/tests/check_frontend.cjs
+node community/tests/check_discovery.cjs
 node community/tests/check_planner.cjs
 node community/tests/check_browser.cjs
 ```

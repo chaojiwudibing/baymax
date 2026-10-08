@@ -7,3 +7,7 @@
 完整说明见 [项目README](../README.zh-CN.md)、[来源整理](../references/community-planning.md)、[日历接入](../references/calendar-sync.md)。连接经授权的CalDAV后，保存有效修订自动排队同步；没连接时不会假报提醒已启用。
 
 默认私人数据存于`data/community.sqlite3`，不随Git发布。正式记录建议用`--database /PRIVATE/.baymax/community.sqlite3`。会话cookie区分本地所有权，清理cookie会失去原会话入口，应备份数据库与导出的记录。仅监听127.0.0.1，不能当公网多用户服务部署。快照来源仍有明确未审核项，详见主README。
+
+## 目录界面
+
+首页提供分类、搜索、排序、收藏和可展开筛选；筛选保存在网址中，计划使用独立详情页。选中步骤后可从底部组合栏进入“我的30天”。支持手机导航及深浅色主题。界面对标与验证范围见[视觉说明](视觉对标.md)。

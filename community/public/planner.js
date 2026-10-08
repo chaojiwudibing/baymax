@@ -1,5 +1,5 @@
 'use strict';
-let lifeLibrary, lifeData, lifeCart=[], editingLife=null, lifeQuery='', lifeKind='habit', lifeDay=1, nutritionAudit=null;
+let lifeLibrary, lifeData, lifeCart=[], editingLife=null, lifeQuery='', lifeKind='all', lifeDay=1, nutritionAudit=null;
 const weekdays=['一','二','三','四','五','六','日'];
 const lifeKinds={habit:'生活习惯',creator:'博主执行计划',learning:'博主学习安排',tool:'开源工具使用',all:'全部'};
 const moduleById=id=>lifeLibrary.modules.find(m=>m.id===id);
@@ -10,14 +10,22 @@ async function loadLife(revision){
 }
 function renderLife(){
  const main=$('#main'); if(!lifeLibrary)return;
- if(page==='my-plan'){main.innerHTML=personalLife();return;}
- if(page==='calendar'){main.innerHTML=calendarGuide();return;}
- const matches=lifeLibrary.modules.filter(m=>(lifeKind==='all'||m.kind===lifeKind)&&[m.title,m.author,m.goal].join(' ').toLowerCase().includes(lifeQuery.toLowerCase()));
- main.innerHTML=`<div class="page life-page"><section class="section-head life-hero"><span class="eyebrow">选择 · 组合 · 执行 · 复盘</span><h1>把好方法，变成<span class="keep">你的30天。</span></h1><p>从一个小计划开始。挑选适合自己的步骤，放进日常，再同步到手机日历。</p><a href="#my-plan" class="button dark">组合我的计划 <span id="life-count">${lifeCart.length||''}</span> →</a></section><div class="life-context"><span>${lifeLibrary.counts.structured_tools} 份工具使用流程</span><span>10 份博主学习安排</span><span>4 份生活组织模板</span></div><div class="life-toolbar"><label class="search-wrap"><input id="life-search" type="search" placeholder="搜索作者、计划或目标" aria-label="搜索计划" value="${esc(lifeQuery)}"></label><label>类型 <select id="life-kind">${Object.entries(lifeKinds).map(([k,v])=>`<option value="${k}"${k===lifeKind?' selected':''}>${v}</option>`).join('')}</select></label></div>${lifeKind==='creator'?'<p class="notice">这10个来源缺少完整口述核对，不能冒充博主的可执行处方。可先选择学习安排；完整执行模块须补齐原文依据与适用条件。</p>':''}<div class="life-grid">${matches.map(m=>`<article class="life-card"><div class="life-card-meta">${esc(m.author)}<span>${m.status==='ready'?'可选步骤':'待核实'}</span></div><h2><button data-life-detail="${m.id}">${esc(m.title)}</button></h2><p>${esc(m.goal)}</p><div class="life-card-footer"><span>${m.actions.length} 个步骤 · ${m.kind==='creator'?'尚未解锁执行':m.kind==='learning'?'仅学习':m.kind==='tool'?'使用流程':'可调日程'}</span><button class="button small" data-life-detail="${m.id}">${lifeCart.some(x=>x.module===m.id)?'已选 · 编辑':'查看步骤'} ↗</button></div></article>`).join('')||'<div class="empty">没有匹配的计划。</div>'}</div><details class="reading-format"><summary>来源覆盖与整理进度</summary><p>已登记 ${lifeLibrary.counts.sources} 个来源。${lifeLibrary.counts.candidate_pending} 个搜索候选仍需核对；10个博主执行计划仍待完整口述证据。工具使用流程、学习安排与健康执行建议分别标记，不把软件功能或视频标题包装成健康处方。</p><button id="life-inventory" class="button">下载完整整理清单</button></details></div>`;
+ if(page==='my-plan'){main.innerHTML=personalLife();syncPlanBasket();return;}
+ if(page==='calendar'){main.innerHTML=calendarGuide();syncPlanBasket();return;}
+ if(page==='plan'){
+  main.innerHTML=planDetailPage(currentRoute().params.get('id'));syncPlanBasket();return;
+ }
+ main.innerHTML=renderDiscovery();renderDiscoveryResults();
 }
+
 function lifeDetail(id){
- const m=moduleById(id);if(!m)return;const sel=lifeCart.find(x=>x.module===id);
- showModal(`<h2 id="modal-title">${esc(m.title)}</h2><p>${esc(m.goal)}</p><div class="detail-note"><b>适用条件</b><p>${esc(m.audience)}</p><p>${esc(m.safety)}</p></div><form id="life-module-form" data-module="${m.id}"><div class="life-steps">${m.actions.map((a,i)=>{const o=sel?.overrides?.[a.id]||{};return `<section class="life-step"><label class="check"><input type="checkbox" name="action" value="${a.id}"${!sel||sel.actions.includes(a.id)?' checked':''}${m.status!=='ready'?' disabled':''}><strong>${i+1}. ${esc(a.title)}</strong></label><p>${esc(a.instruction)}</p><small>记录：${esc(a.metric)}<br>${a.days?'第 '+a.days.join('、')+' 天':'每天'} · 预留 ${a.minutes} 分钟</small><div class="life-step-controls"><label>时间 <input type="time" name="time-${a.id}" value="${esc(o.time||a.time)}" required></label><label>提前提醒 <select name="alarm-${a.id}">${[0,5,10,15,30,60].map(n=>`<option value="${n}"${n===(o.reminder_minutes??10)?' selected':''}>${n} 分钟</option>`).join('')}</select></label></div><div class="weekdays" role="group" aria-label="${esc(a.title)}的星期">${weekdays.map((d,n)=>`<label><input type="checkbox" name="week-${a.id}" value="${n}"${(o.weekdays||a.weekdays||[0,1,2,3,4,5,6]).includes(n)?' checked':''}>${d}</label>`).join('')}</div></section>`;}).join('')}</div><div class="detail-note"><b>作者观点与编辑安排的区别</b><p>${esc(m.basis)}</p>${m.sources.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)} ↗</a><p>${esc(s.locator)}</p>`).join('')}</div><p class="form-error" role="alert"></p>${m.status==='ready'?'<button type="submit" class="button dark">保存所选步骤 →</button>':`<p class="notice">待核实完整口述、数值、频率与适用条件。当前不能加入执行日程。</p><button type="button" class="button" data-life-detail="read-${m.id.replace('creator-','')}">先看学习安排 →</button>`}</form>`);
+ const m=moduleById(id);if(!m)return;
+ if(['plans','plan'].includes(page)){location.hash='plan?id='+id;return;}
+ showModal(lifeModuleContent(m));
+}
+function lifeModuleContent(m,fullPage=false){
+ const sel=lifeCart.find(x=>x.module===m.id);
+ return `${fullPage?'':`<h2 id="modal-title">${esc(m.title)}</h2><p>${esc(m.goal)}</p>`}<div class="detail-note"><b>适用条件</b><p>${esc(m.audience)}</p><p>${esc(m.safety)}</p></div><form id="life-module-form" data-module="${m.id}"><div class="life-steps">${m.actions.map((a,i)=>{const o=sel?.overrides?.[a.id]||{};return `<section class="life-step"><label class="check"><input type="checkbox" name="action" value="${a.id}"${!sel||sel.actions.includes(a.id)?' checked':''}${m.status!=='ready'?' disabled':''}><strong>${i+1}. ${esc(a.title)}</strong></label><p>${esc(a.instruction)}</p><small>记录：${esc(a.metric)}<br>${a.days?'第 '+a.days.join('、')+' 天':'每天'} · 预留 ${a.minutes} 分钟</small><div class="life-step-controls"><label>时间 <input type="time" name="time-${a.id}" value="${esc(o.time||a.time)}" required></label><label>提前提醒 <select name="alarm-${a.id}">${[0,5,10,15,30,60].map(n=>`<option value="${n}"${n===(o.reminder_minutes??10)?' selected':''}>${n} 分钟</option>`).join('')}</select></label></div><div class="weekdays" role="group" aria-label="${esc(a.title)}的星期">${weekdays.map((d,n)=>`<label><input type="checkbox" name="week-${a.id}" value="${n}"${(o.weekdays||a.weekdays||[0,1,2,3,4,5,6]).includes(n)?' checked':''}>${d}</label>`).join('')}</div></section>`;}).join('')}</div><div class="detail-note"><b>作者观点与编辑安排的区别</b><p>${esc(m.basis)}</p>${m.sources.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.title)} ↗</a><p>${esc(s.locator)}</p>`).join('')}</div><p class="form-error" role="alert"></p>${m.status==='ready'?'<button type="submit" class="button dark">保存所选步骤 →</button>':`<p class="notice">待核实完整口述、数值、频率与适用条件。当前不能加入执行日程。</p><button type="button" class="button" data-life-detail="read-${m.id.replace('creator-','')}">先看学习安排 →</button>`}</form>`;
 }
 function currentLife(){return editingLife?lifeData.plans.find(x=>x.payload.id===editingLife):lifeData.plans[0];}
 function syncLabel(p){const s=lifeData.calendar?.find(x=>x.id===p.id);return !s?'尚未连接日历':({queued:'日历更新排队中',syncing:'正在更新云端日历',synced:'云端已接受同步；手机显示与锁屏提醒仍需实测',conflicts:'云端有手工修改，未覆盖；请让 Baymax 核对同步冲突',failed:'同步未完成，请检查本机连接后重新保存计划重试',blocked:'计划冲突，尚未更新日历'}[s.status]||'待核对');}
@@ -37,7 +45,7 @@ function calendarRecommendation(){
 function downloadLife(name,value){const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 document.addEventListener('click',async event=>{
  const b=event.target.closest('button,a');if(!b)return;
- if(b.dataset.lifeDetail){lifeDetail(b.dataset.lifeDetail);return;}
+ if(b.dataset.lifeDetail){if(b.tagName==='A')return;event.preventDefault();lifeDetail(b.dataset.lifeDetail);return;}
  if(b.dataset.lifeRemove){lifeCart=lifeCart.filter(s=>s.module!==b.dataset.lifeRemove);renderLife();return;}
  if(b.dataset.lifeDay){lifeDay=Number(b.dataset.lifeDay);renderLife();return;}
  if(b.dataset.lifeOpen){editingLife=b.dataset.lifeOpen;const x=currentLife();lifeCart=structuredClone(x.request.selections);nutritionAudit=x.request.nutrition_audit||null;lifeDay=1;renderLife();return;}
@@ -47,11 +55,11 @@ document.addEventListener('click',async event=>{
  if(b.dataset.lifeRecord){const p=currentLife().payload;const e=p.events.find(e=>e.id===b.dataset.lifeRecord);const r=lifeData.records.find(r=>r.plan===p.id&&r.event===e.id);showModal(`<h2 id="modal-title">${esc(e.title)} · 实际记录</h2><form id="life-record-form" class="modal-form" data-plan="${p.id}" data-event="${e.id}"><label>状态<select name="status">${[['done','完成'],['skipped','跳过'],['pending','尚未完成']].map(([k,v])=>`<option value="${k}"${k===(r?.status||'pending')?' selected':''}>${v}</option>`).join('')}</select></label><label>实际做了什么、感受或困难<textarea name="note" maxlength="2000">${esc(r?.note||'')}</textarea></label><p>打勾不会推算真实摄入或营养值；没记录的数字留空。</p><p class="form-error" role="alert"></p><button class="button dark" type="submit">保存真实记录</button></form>`);}
 });
 document.addEventListener('change',async e=>{
- if(e.target.id==='life-kind'){lifeKind=e.target.value;renderLife();}
+ if(e.target.id==='life-kind'){lifeKind=e.target.value;if(lifeKind==='creator'){discoverReady=false;$('#plan-ready').checked=false;}discoverLimit=18;renderDiscoveryResults();}
  if(['calendar-phone','calendar-computer'].includes(e.target.id))calendarRecommendation();
  if(e.target.id==='life-audit')try{const f=e.target.files[0];if(!f)return;if(f.size>2500000)throw Error('文件超过2.5MB');nutritionAudit=JSON.parse(await f.text());$('#life-audit-status').textContent='已选文件，生成时将核验日期与核算状态';}catch(err){nutritionAudit=null;$('#life-audit-status').textContent='读取失败：'+err.message;}
 });
-document.addEventListener('input',e=>{if(e.target.id==='life-search'){const pos=e.target.selectionStart;lifeQuery=e.target.value;renderLife();$('#life-search').focus();$('#life-search').setSelectionRange(pos,pos);}});
+document.addEventListener('input',e=>{if(e.target.id==='life-search'){lifeQuery=e.target.value;discoverLimit=18;renderDiscoveryResults();}});
 document.addEventListener('submit',async e=>{
  const f=e.target;if(!['life-module-form','life-plan-form','life-record-form'].includes(f.id))return;e.preventDefault();const error=f.querySelector('.form-error');error.textContent='';const button=f.querySelector('[type=submit]');button.disabled=true;
  try{
